@@ -32,10 +32,13 @@ DATA_DIR = './data'
 DATA_URL = 'http://ai.stanford.edu/~acoates/stl10/stl10_binary.tar.gz'
 
 # path to the binary train file with image data
-DATA_PATH = './data/stl10_binary/train_X.bin'
+train_DATA_PATH = './data/stl10_binary/train_X.bin'
+test_DATA_PATH = './data/stl10_binary/test_X.bin'
+unlab_DATA_PATH = './data/stl10_binary/unlabeled_X.bin'
 
 # path to the binary train file with labels
-LABEL_PATH = './data/stl10_binary/train_y.bin'
+train_LABEL_PATH = './data/stl10_binary/train_y.bin'
+test_LABEL_PATH = './data/stl10_binary/test_y.bin'
 
 def read_labels(path_to_labels):
     """
@@ -125,19 +128,21 @@ def download_and_extract():
         print('Downloaded', filename)
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
-def save_images(images, labels):
+def save_images(images, labels = None, mode = 'train'):
     print("Saving images to disk")
     i = 0
+    if labels is None:
+        labels = [None]*images.shape[0]
     for image in images:
         label = labels[i]
-        directory = './img/' + str(label) + '/'
+        directory = './stl10/' + mode + '/' + str(label) + '/' if label is not None else './stl10/' + mode + '/'
         try:
             os.makedirs(directory, exist_ok=True)
         except OSError as exc:
             if exc.errno == errno.EEXIST:
                 pass
         filename = directory + str(i)
-        print(filename)
+        # print(filename)
         save_image(image, filename)
         i = i+1
     
@@ -145,17 +150,42 @@ if __name__ == "__main__":
     # download data if needed
     download_and_extract()
 
+    #-----------------   TRAIN IMAGES AND LABELS
     # test to check if the image is read correctly
-    with open(DATA_PATH) as f:
+    with open(train_DATA_PATH) as f:
         image = read_single_image(f)
         plot_image(image)
-
     # test to check if the whole dataset is read correctly
-    images = read_all_images(DATA_PATH)
+    images = read_all_images(train_DATA_PATH)
     print(images.shape)
-
-    labels = read_labels(LABEL_PATH)
+    labels = read_labels(train_LABEL_PATH)
     print(labels.shape)
-
     # save images to disk
-    save_images(images, labels)
+    save_images(images, labels, 'train')
+
+    
+    #_----------------TEST IMAGES AND LABELS
+    # test to check if the image is read correctly
+    with open(test_DATA_PATH) as f:
+        image = read_single_image(f)
+        plot_image(image)
+    # test to check if the whole dataset is read correctly
+    images = read_all_images(test_DATA_PATH)
+    print(images.shape)
+    labels = read_labels(test_LABEL_PATH)
+    print(labels.shape)
+    # save images to disk
+    save_images(images, labels, 'test')
+
+    #--------------- UNLABALED IMAGES 
+    # test to check if the image is read correctly
+    with open(unlab_DATA_PATH) as f:
+        image = read_single_image(f)
+        plot_image(image)
+    # test to check if the whole dataset is read correctly
+    images = read_all_images(unlab_DATA_PATH)
+    print(images.shape)
+    labels = None #read_labels(train_LABEL_PATH)
+    #print(labels.shape)
+    # save images to disk
+    save_images(images, labels, 'unlab')
